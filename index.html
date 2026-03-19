@@ -379,7 +379,21 @@
         setFace(die, result);
         die.classList.remove('rolling');
         die.classList.add('land');
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ result, ts: Date.now() })); } catch {}
+        const ts = Date.now();
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ result, ts })); } catch {}
+
+        // Log roll to Make webhook → Google Sheets
+        fetch('https://hook.eu2.make.com/17b09p4cwtu537f4h6l1d91jn5bulerj', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            order: orderId,
+            result: result,
+            win: result === 6 ? 'WIN ✅' : 'NO WIN',
+            timestamp: new Date(ts).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+          })
+        }).catch(() => {}); // silent fail — never block the game
+
         setTimeout(() => {
           document.getElementById('idle-state').style.display = 'none';
           showResult(result, true);
